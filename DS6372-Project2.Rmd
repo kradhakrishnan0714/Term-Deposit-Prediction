@@ -1,0 +1,463 @@
+---
+title: "DS6372-Applied Statistics-Project2"
+author: "Karthik Radhakrishnan"
+date: "2024-12-01"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Exploratory Data Analysis
+
+```{r}
+# Loading the data
+
+bank <- read.csv("bank.csv",sep=";",header=TRUE,stringsAsFactors = TRUE)
+head(bank)
+#summary(bank)
+str(bank)
+
+# Find if any of the column has missing values
+sum(is.na(bank))
+
+```
+
+### Analyzing the distribution of numeric variables
+```{r,message=FALSE}
+# Numerical variables
+numeric_vars <- c("age", "balance", "day","duration", "campaign", "pdays", "previous")
+summary(bank[numeric_vars])
+
+# Histograms for numerical variables
+#install.packages("ggthemes")
+library(ggthemes)
+library(ggplot2)
+for (var in numeric_vars) {
+  print(ggplot(bank, aes_string(var)) + geom_histogram() + ggtitle(paste("Histogram of", var))+theme_economist())
+}
+```
+
+### Analyzing the distribution of categorical variables
+
+```{r,message=FALSE}
+categorical_vars <- c("job", "marital", "education", "default", "housing", "loan", "contact", "month", "poutcome")
+for (var in categorical_vars) {
+  print(
+    ggplot(bank, aes_string(var)) + 
+      geom_bar() + 
+      ggtitle(paste("Bar plot of", var)) +
+      theme_minimal()
+  )
+}
+```
+
+### Creating a pair plot for numeric features to assess the class overlap. 
+
+```{r,message=FALSE}
+library(GGally)
+
+numeric_data <- bank[, numeric_vars]
+
+# Create the pair plot
+ggpairs(numeric_data, 
+        aes(color = bank$y, alpha = 0.7),
+        diag = list(continuous = "densityDiag"), # Add density plots on the diagonal
+        upper = list(continuous = "cor")) # Add correlation coefficients in the upper panels
+
+```
+
+### Creating loess plots for numeric predictors
+
+```{r}
+#converting response variable to numeric and store in a separate variable
+bank$y.num <- ifelse(bank$y == "yes",1,0)
+
+#loess plot for all numeric variables
+
+for (var in numeric_vars) {
+  print(
+    ggplot(bank, aes(x = .data[[var]], y = y.num)) +  # Dynamically map the variable
+      geom_point() + 
+      geom_smooth(method = "loess", size = 1, span = 1) + 
+      ylim(-0.2, 1.2) + 
+      ggtitle(paste("Loess plot of", var)) +
+      theme_minimal()
+  )
+}
+
+
+```
+
+
+
+### Creating bar plot for categorical variables
+
+```{r}
+library(dplyr)
+
+## Calculating the proportion of term deposit by job
+JobSummary <- bank |> 
+  group_by(job,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((job))
+
+JobSummary
+
+ggplot(JobSummary, aes(x = job, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by job",
+    x = "Job",
+    y = "Proportion"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1))
+
+
+## Calculating the proportion of term deposit by marital status
+MaritalSummary <- bank |> 
+  group_by(marital,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((marital))
+
+MaritalSummary
+
+ggplot(MaritalSummary, aes(x = marital, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by marital status",
+    x = "Martial Status",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+## Calculating the proportion of term deposit by education
+EducationSummary <- bank |> 
+  group_by(education,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((education))
+
+EducationSummary
+
+ggplot(EducationSummary, aes(x = education, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by education",
+    x = "Education",
+    y = "Proportion"
+  ) +
+  theme_minimal()
+
+
+## Calculating the proportion of term deposit by default
+DefaultSummary <- bank |> 
+  group_by(default,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((default))
+
+DefaultSummary
+
+ggplot(DefaultSummary, aes(x = default, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by default",
+    x = "Default",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+## Calculating the proportion of term deposit by housing
+HousingSummary <- bank |> 
+  group_by(housing,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((housing))
+
+HousingSummary
+
+ggplot(HousingSummary, aes(x = housing, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by housing",
+    x = "Housing",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+
+## Calculating the proportion of term deposit by personal loan
+LoanSummary <- bank |> 
+  group_by(loan,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((loan))
+
+LoanSummary
+
+ggplot(LoanSummary, aes(x = loan, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by loan",
+    x = "Loan",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+## Calculating the proportion of term deposit by contact type
+ContactSummary <- bank |> 
+  group_by(contact,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((contact))
+
+ContactSummary
+
+ggplot(ContactSummary, aes(x = contact, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by contact",
+    x = "Contact",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+## Calculating the proportion of term deposit by last contact month of the year
+ContactMonthSummary <- bank |> 
+  group_by(month,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((month))
+
+ContactMonthSummary
+
+ggplot(ContactMonthSummary, aes(x = month, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by contact month",
+    x = "Contact month",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+
+## Calculating the proportion of term deposit by outcome
+OutcomeSummary <- bank |> 
+  group_by(poutcome,y)|> 
+  summarise(count=n())|>
+  mutate(percent=round(count/sum(count),2))|> 
+  arrange((poutcome))
+
+OutcomeSummary
+
+ggplot(OutcomeSummary, aes(x = poutcome, y = percent, fill = y)) +
+  geom_bar(stat = "identity") +
+  labs(
+    title = "Proportion of term deposit by outcome",
+    x = "outcome",
+    y = "Proportion"
+  ) +
+  theme_minimal() 
+
+```
+
+
+
+### Feature selection for logistic regression model
+
+```{r,message=FALSE}
+library(caret)
+
+# train and test validation split
+set.seed(1234)
+
+trainIndex<-createDataPartition(bank$y,p=.5,list=FALSE)  #p: proportion of data in train
+
+training<-bank[trainIndex,]
+validate<-bank[-trainIndex,]
+
+# fitting a glmnet model with logloss as error metric
+
+fitControl<-trainControl(method="repeatedcv",number=10,repeats=1,classProbs=TRUE, summaryFunction=twoClassSummary)
+
+glmnet.fit <- train(
+  y ~ .-y.num,
+  data = training,
+  method = "glmnet",
+  trControl = fitControl,
+  tuneGrid = expand.grid(alpha = 1, lambda = seq(0.001, 0.1, length = 10)), # Set alpha = 1
+  preProcess = c("center", "scale"),
+  metric = "ROC"
+)
+
+glmnet.fit
+
+# Extract features selected by Lasso
+selected_features <- coef(glmnet.fit$finalModel, glmnet.fit$bestTune$lambda)
+print(selected_features)
+
+```
+
+### checking for multicolinearity
+
+```{r}
+library(car)
+
+# Fit a logistic regression model
+full_model <- glm(y ~ .-y.num, data = training, family = "binomial")
+
+# Calculate VIF for each predictor
+vif_values <- vif(full_model)
+print(vif_values)
+
+```
+
+### Building a simple Multiple logistic regression model using the values selected by lasso regression
+```{r}
+logistic.model <- glm(y~job+marital+education+loan+contact+month+duration+previous+poutcome,
+                      data=training,
+                      family="binomial")
+
+summary(logistic.model)
+```
+
+```{r}
+
+# Make predictions on validation set using logistic regression model
+pred_prob <- predict(logistic.model, newdata = validate, type = "response")
+pred_class <- ifelse(pred_prob > 0.5, "yes", "no")
+
+# Create confusion matrix
+library(caret)
+conf_matrix <- confusionMatrix(factor(pred_class), factor(validate$y),positive='yes')
+print("Confusion Matrix:")
+print(conf_matrix)
+
+
+# Print feature importance
+coef_summary <- summary(logistic.model)$coefficients
+feature_importance <- data.frame(
+  Feature = rownames(coef_summary),
+  Coefficient = coef_summary[,1],
+  P_value = coef_summary[,4]
+)
+feature_importance <- feature_importance[order(abs(feature_importance$Coefficient), decreasing = TRUE),]
+print("Feature Importance:")
+print(feature_importance)
+```
+
+### fitting a complex logistic regression model
+
+#### Feature Engineering
+
+```{r}
+bank2 <- bank
+# Create interactions between significant variables
+bank2$duration_success <- bank2$duration * (bank2$poutcome == "success")
+bank2$duration_retired <- bank2$duration * (bank2$job == "retired")
+bank2$retired_success <- (bank2$job == "retired") * (bank2$poutcome == "success")
+
+# Create binned variables for continuous features
+bank2$duration_bin <- cut(bank2$duration, 
+                           breaks = quantile(bank2$duration, probs = seq(0, 1, 0.25)),
+                           labels = c("short", "medium", "long", "very_long"))
+
+# Create seasonal groupings
+bank2$season <- case_when(
+  bank2$month %in% c("dec", "jan", "feb") ~ "winter",
+  bank2$month %in% c("mar", "apr", "may") ~ "spring",
+  bank2$month %in% c("jun", "jul", "aug") ~ "summer",
+  TRUE ~ "fall"
+)
+
+# Adding Economic Indicators
+
+bank2$age_group <- cut(bank2$age, 
+                         breaks = c(0, 30, 45, 60, Inf),
+                         labels = c("young", "middle", "senior", "retired"))
+bank2$high_balance <- ifelse(bank2$balance > median(bank2$balance), 1, 0)
+
+# Create campaign effectiveness indicator
+bank2$campaign_ratio <- bank2$previous / (bank2$campaign + 1)
+bank2$recent_contact <- ifelse(bank2$pdays > -1 & bank2$pdays < 30, 1, 0)
+
+
+
+```
+### fitting Complex logistic regression model. 
+
+```{r}
+
+# train and test validation split
+set.seed(1234)
+
+trainIndex2<-createDataPartition(bank2$y,p=.5,list=FALSE)  #p: proportion of data in train
+
+training2<-bank2[trainIndex,]
+validate2<-bank2[-trainIndex,]
+
+
+logistic.complex.model <- glm(
+  y ~ job + marital + education + loan + contact + 
+      season + duration_bin + poutcome + previous +
+      duration_success + duration_retired + retired_success +
+      I(duration^2) + job:poutcome + season:contact +
+      age_group + high_balance + campaign_ratio +
+      age_group:high_balance + 
+      poutcome:campaign_ratio,
+  data = training2,
+  family = "binomial"
+)
+
+
+
+# Make predictions on validation set using complex logistic regression model
+pred_prob <- predict(logistic.complex.model, newdata = validate2, type = "response")
+pred_class <- ifelse(pred_prob > 0.5, "yes", "no")
+
+# Create confusion matrix
+conf_matrix <- confusionMatrix(factor(pred_class), factor(validate2$y),positive='yes')
+print("Confusion Matrix:")
+print(conf_matrix)
+
+```
+### fitting a LDA Model
+```{r}
+
+fitControl<-trainControl(method="repeatedcv",number=10,repeats=1,classProbs=TRUE, summaryFunction=mnLogLoss)
+
+lda.fit<-train(y~age+balance+day+duration+campaign+pdays+previous,
+               data=training,
+               method="lda",
+               trControl=fitControl,
+               metric="logLoss")
+
+#Computing predicted probabilities on the validation data using LDA model
+lda.predictions <- predict(lda.fit, validate, type = "prob")[,"yes"]
+
+threshold=0.5
+
+lda.class.predictions = as.factor(ifelse(lda.predictions>threshold, "yes", "no"))
+
+confusionMatrix(lda.class.predictions,validate$y,positive="yes")
+
+length(lda.predictions)
+
+# Plot ROC curve
+library(pROC)
+
+lda.roc<-roc(response=validate$y,predictor=lda.predictions,levels=c("no","yes"))
+plot(lda.roc,print.thres="best")
+
+# Area under the curve for lda model. 
+
+auc(lda.roc)
+
+
+```
+
